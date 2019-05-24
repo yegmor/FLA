@@ -9,7 +9,7 @@ namespace ConsoleApp1
 {
     class Program
     {
-        public static void Main1(string[] args)
+        public static void Main(string[] args)
         {
             StreamReader Input = new StreamReader("Input.txt");
             //StreamWriter Input2 = new StreamWriter("Input.txt");
@@ -25,118 +25,18 @@ namespace ConsoleApp1
 
             List<List<string>> Transitions = new List<List<string>>();
             List<string> Transition = new List<string>();
-            Transition = Input.ReadLine().Split(',').ToList();
-            for (int i = 0; Input.ReadLine() != null; i++)
+            string temp;
+            for (int i = 0; (temp = Input.ReadLine()) != null; i++)
             {
-                //Input2.WriteLine("asd");
+                Transition = temp.Split(',').ToList();
                 Transitions.Add(Transition);
-                Transition = Input.ReadLine().Split(',').ToList();
             }
 
             // for(int i=0;i<Transitions[1].Count;i++)
             //   Console.WriteLine($"{Transitions[1][i]}");
 
-            NFAToDFA(Transitions, States, Alphabets);
-        }
-        public static List<List<string>> NFAToDFA(List<List<string>> Transitions, int States, List<string> Alphabets)
-        {
-            string InitialState = "i";
-            for (int i = 0; i < Transitions.Count; i++)
-            {
-                if (Transitions[i][0].Substring(0, 2) == "->")
-                    InitialState = Transitions[i][0].Substring(2);
-            }
-            int GroupsNum = 0;
-            //int EachGroup = 0;
-            List<string> Group = new List<string>();
-            Group.Add(InitialState);
-            List<List<string>> Groups = new List<List<string>>();
-            Groups.Add(Group);
 
-            List<string> group = new List<string>();
-            for (int i = 0; i < Groups.Count; i++)
-            {
-                for (int j = 0; j < Groups[i].Count; j++)
-                {
-                    for (int a = 0; a < Alphabets.Count; a++)
-                    {
-                        for (int k = 0; k < Transitions.Count; k++)
-                        {
-                            if (Transitions[k][0] == Groups[i][j] && Transitions[k][1] == Alphabets[a])
-                            {
-                                //Groups[GroupsNum][EachGroup] = Transitions[k][2];
-                                // Groups[GroupsNum][EachGroup] = Transitions[k][2];
-                                group = new List<string>();
-                                group.Add(Transitions[k][2]);
-                                //Groups[GroupsNum].Add(Transitions[k][2]);
-                                // EachGroup++;
-                            }
-                        }
-                        Groups.Add(group);
-                        //Groups.Add(Group);
-                        // EachGroup = 0;
-                        GroupsNum++;
-                    }
-                }
-            }
-
-            //string[][][] Q = new string[GroupsNum][][];
-            List<List<List<string>>> Q = new List<List<List<string>>>();
-            //string[] Results = new string[States];
-            List<string> Results = new List<string>();
-            for (int i = 0; i < GroupsNum; i++)
-            {
-                for (int j = 0; j < States; j++)
-                {
-                    for (int a = 0; a < Alphabets.Count; a++)
-                    {
-                        for (int k = 0; k < Transitions.Count; k++)
-                        {
-                            if (Transitions[k][0] == Groups[i][j] && Transitions[k][1] == Alphabets[a])
-                            {
-                                //Results[EachGroup] = Transitions[k][2];
-                                //EachGroup++;
-                                Q[i][1].Add(Transitions[k][2]);
-                            }
-                        }
-                        //Q[i][0][0] = Alphabets[a];
-                        Q[i][0].Add(Alphabets[a]);
-                        //Q[GroupsNum][1] = Results;
-                    }
-                }
-            }
-            for (int i = 0; i < GroupsNum; i++)
-            {
-                for (int j = 0; j < GroupsNum; j++)
-                {
-                    if (Q[i][1] == Groups[j])
-                        Q[i][1][0] = $"q{j}";
-
-                }
-            }
-
-            //string[][] DFA = new string[GroupsNum][];
-            List<List<string>> DFA = new List<List<string>>();
-            for (int i = 0; i < GroupsNum; i++)
-            {
-                //DFA[i][0] = $"q{i}";
-                //DFA[i][1] = Q[i][0][0];
-                //DFA[i][2] = Q[i][1][0];
-                DFA[i].Add($"q{i}");
-                DFA[i].Add(Q[i][0][0]);
-                DFA[i].Add(Q[i][1][0]);
-            }
-
-            for (int i = 0; i < DFA.Count; i++)
-            {
-                Console.WriteLine($"{DFA[i][0]},{DFA[i][1]},{DFA[i][2]}");
-            }
-            return DFA;
-        }
-
-        public static void Main(string[] args)
-        {
-            List<List<string>> dfaTransitions = new List<List<string>>();
+            List<List<string>> dfaTransitions = NFAToDFA(Transitions, States, Alphabets);
 
 
             //--------------------------------------test for part 2-----------------------------------------------------------
@@ -203,11 +103,216 @@ namespace ConsoleApp1
             StringBuilder str = new StringBuilder();
             foreach (string alphabet in inputAlphabet)
                 str.Append($"{alphabet},");
-            Console.WriteLine(str.ToString().TrimEnd(new char[] {',' }));
+            Console.WriteLine(str.ToString().TrimEnd(new char[] { ',' }));
 
             foreach (string transition in result)
                 Console.WriteLine(transition);
         }
+
+        //--------------------------------------part 1-----------------------------------------------------
+
+        static List<List<string>> NFAToDFA(List<List<string>> Transitions, int States, List<string> Alphabets)
+        {
+            string InitialState = "i";
+            for (int i = 0; i < Transitions.Count; i++)
+            {
+                if (Transitions[i][0].Substring(0, 2) == "->")
+                {
+                    InitialState = Transitions[i][0].Substring(2);
+                    Transitions[i][0] = InitialState;
+                }
+            }
+
+            List<string> finalStates = new List<string>();
+            for (int i = 0; i < Transitions.Count; i++)
+            {
+
+                if (Transitions[i][0].Substring(0, 1) == "*" && !finalStates.Contains(Transitions[i][0]))
+                {
+                    finalStates.Add(Transitions[i][0]);
+                }
+                if (Transitions[i][2].Substring(0, 1) == "*" && !finalStates.Contains(Transitions[i][2]))
+                    finalStates.Add(Transitions[i][2]);
+            }
+
+            bool isFinalState = false;
+            List<string> group = new List<string>();
+            group.Add(InitialState);
+            List<List<string>> groups = new List<List<string>>();
+            groups.Add(group);
+            List<List<string>> results = new List<List<string>>();
+            group = new List<string>();
+
+            for (int i = 0; i < groups.Count; i++)
+            {
+                for (int a = 0; a < Alphabets.Count; a++)
+                {
+                    for (int j = 0; j < groups[i].Count; j++)
+                    {
+                        for (int k = 0; k < Transitions.Count; k++)
+                        {
+                            if (Transitions[k][0] == groups[i][j] && (Transitions[k][1] == Alphabets[a]))
+                            {
+                                if (finalStates.Contains(groups[i][j]))
+                                    isFinalState = true;
+                                group.Add(Transitions[k][2]);
+
+                            }
+                        }
+                    }
+                    if (!CheckDuplicate(groups, group) && group.Count != 0)
+                    {
+                        List<string> result = new List<string>();
+                        if (isFinalState)
+                        {
+                            result.Add($"*q{i}");
+                            isFinalState = false;
+                        }
+                        else
+                            result.Add($"q{i}");
+                        result.Add(Alphabets[a]);
+                        result.Add($"q{groups.Count}");
+                        results.Add(result);
+                        groups.Add(group);
+
+                    }
+                    else
+                    {
+                        List<string> result = new List<string>();
+                        if (isFinalState)
+                        {
+                            result.Add($"*q{i}");
+                            isFinalState = false;
+                        }
+                        else
+                            result.Add($"q{i}");
+                        result.Add(Alphabets[a]);
+                        result.Add($"q{Duplicate(groups, group)}");
+                        results.Add(result);
+                    }
+                    group = new List<string>();
+                }
+            }
+
+            List<string> final = new List<string>();
+            for (int i = 0; i < results.Count; i++)
+            {
+                if (results[i][0].Substring(0, 1) == "*" && !final.Contains(results[i][0]))
+                    final.Add(results[i][0].Substring(1));
+            }
+
+            for (int i = 0; i < results.Count; i++)
+            {
+                if (final.Contains(results[i][2]))
+                    results[i][2] = $"*{results[i][2]}";
+            }
+            //List<List<List<string>>> Q = new List<List<List<string>>>(groups.Count); 
+            //for (int i = 0; i < groups.Count; i++)
+            //{
+            //    for (int a = 0; a < Alphabets.Count; a++)
+            //    {
+            //        List<string> list = new List<string>();
+            //        List<string> list2 = new List<string>();
+            //        List<List<string>> listlist = new List<List<string>>();
+            //        for (int j = 0; j < groups[i].Count; j++)
+            //        {
+            //            for (int k = 0; k < Transitions.Count; k++)
+            //            {
+            //                if (Transitions[k][0] == groups[i][j] && Transitions[k][1] == Alphabets[a])
+            //                {
+
+
+            //                    list.Add(Transitions[k][2]);
+
+            //                    list2.Add(Alphabets[a]);
+
+
+            //                }
+            //            }
+
+            //          //  Q[i][0].Add(Alphabets[a]);
+
+            //        }
+            //        listlist.Add(list);
+            //        listlist.Add(list2);
+            //        Q.Add(listlist);
+            //    }
+            //}
+            //for (int i = 0; i < groups.Count; i++)
+            //{
+            //    for (int j = 0; j < groups.Count; j++)
+            //    {
+            //        if (Q[i][0].All(groups[j].Contains) && groups[j].All(Q[i][0].Contains))
+            //        {
+
+            //            //Q[i][2] = new List<string>();
+            //            //List<string> list = new List<string>();
+            //            //list.Add($"q{j}");
+            //            //Q[i].Add(list);
+            //            Q[i][0][0] = $"q{j}";
+            //        }
+
+            //    }
+            //}
+
+            ////string[][] DFA = new string[GroupsNum][];
+            //List<List<string>> DFA = new List<List<string>>();
+            //for (int i = 0; i < groups.Count; i++)
+            //{
+            //    //DFA[i][0] = $"q{i}";
+            //    //DFA[i][1] = Q[i][0][0];
+            //    //DFA[i][2] = Q[i][1][0];
+            //    List<string> list = new List<string>();
+            //    list.Add($"q{i}");
+            //    list.Add(Q[i][1][0]);
+            //    list.Add(Q[i][0][0]);
+            //    DFA.Add(list);
+            //    //DFA[i].Add($"q{i}");
+            //    //DFA[i].Add(Q[i][0][0]);
+            //    //DFA[i].Add(Q[i][1][0]);
+            //}
+
+            Console.WriteLine($"{groups.Count}");
+            for (int i = 0; i < Alphabets.Count; i++)
+            {
+                Console.Write($"{Alphabets[i]},");
+            }
+            Console.WriteLine();
+            Console.WriteLine($"->{results[0][0]},{results[0][1]},{results[0][2]}");
+            for (int i = 1; i < results.Count; i++)
+            {
+                Console.WriteLine($"{results[i][0]},{results[i][1]},{results[i][2]}");
+            }
+            return results;
+        }
+
+        private static bool CheckDuplicate(List<List<string>> groups, List<string> group)
+        {
+            for (int i = 0; i < groups.Count; i++)
+            {
+                if (groups[i].All(group.Contains) && group.All(groups[i].Contains))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static int Duplicate(List<List<string>> groups, List<string> group)
+        {
+            for (int i = 0; i < groups.Count; i++)
+            {
+                if (groups[i].All(group.Contains) && group.All(groups[i].Contains))
+                {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+
+
+        //--------------------------------------part 2-----------------------------------------------------
 
         public static List<string> SimplifyOutput(Dictionary<int, Dictionary<string, int>> simplifiedTransitions, HashSet<int> newFinalStates, int newInitialState, string[] inputAlphabet)
         {
